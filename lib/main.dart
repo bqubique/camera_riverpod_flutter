@@ -1,12 +1,12 @@
-import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:camera_riverpod_flutter/camera_feature_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'core/camera_buton.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -91,29 +91,28 @@ class _CameraPageState extends ConsumerState with WidgetsBindingObserver {
     return Scaffold(
       body: Column(
         children: [
-          _cameraPreviewWidget(),
+          _cameraPreviewWidget(context),
           const Spacer(),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              CameraButton(
-                callback: ref
-                    .watch(applicationCameraControllerProvider.notifier)
-                    .switchCamera,
-                buttonStyle: OutlinedButton.styleFrom(
-                  shape: const CircleBorder(
-                      side: BorderSide(width: 2.0, color: Colors.white)),
-                  backgroundColor: Colors.grey[800],
-                ),
-                child: Row(
-                  children: const [
-                    Padding(
-                      padding: EdgeInsets.all(15.0),
-                      child: Icon(Icons.flip_camera_android_outlined),
-                    ),
-                  ],
+              const Spacer(),
+              SizedBox(
+                height: 60,
+                width: 60,
+                child: CameraButton(
+                  callback: ref
+                      .watch(applicationCameraControllerProvider.notifier)
+                      .switchCamera,
+                  buttonStyle: OutlinedButton.styleFrom(
+                    shape: const CircleBorder(
+                        side: BorderSide(width: 2.0, color: Colors.white)),
+                    backgroundColor: Colors.grey[800],
+                  ),
+                  child: const Icon(Icons.flip_camera_android_outlined),
                 ),
               ),
+              const Spacer(),
               CameraButton(
                 callback: _takePicture,
                 buttonStyle: ButtonStyle(
@@ -130,23 +129,28 @@ class _CameraPageState extends ConsumerState with WidgetsBindingObserver {
                   ],
                 ),
               ),
-              CameraButton(
-                callback: () {},
-                buttonStyle: OutlinedButton.styleFrom(
-                  shape: const CircleBorder(
-                      side: BorderSide(width: 2.0, color: Colors.white)),
-                  backgroundColor: Colors.grey[800],
+              const Spacer(),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(100.0),
+                child: InkWell(
+                  child: SizedBox(
+                    height: 60,
+                    width: 60,
+                    child: stateController.lastPictureTaken!.path.isEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(100.0),
+                            child: Image.asset('assets/img.png',
+                                fit: BoxFit.cover),
+                          )
+                        : Image.file(
+                            File(stateController.lastPictureTaken!.path),
+                            height: 30,
+                          ),
+                  ),
+                  onTap: () {},
                 ),
-                child: stateController.lastPictureTaken!.path.isEmpty
-                    ? const Padding(
-                        padding: EdgeInsets.all(15.0),
-                        child: Icon(Icons.camera_alt_outlined),
-                      )
-                    : Image.file(
-                        File(stateController.lastPictureTaken!.path),
-                        height: 30,
-                      ),
-              )
+              ),
+              const Spacer(),
             ],
           ),
           const Spacer(flex: 2),
@@ -155,7 +159,7 @@ class _CameraPageState extends ConsumerState with WidgetsBindingObserver {
     );
   }
 
-  Widget _cameraPreviewWidget() {
+  Widget _cameraPreviewWidget(BuildContext context) {
     var controller = ref.watch(applicationCameraControllerProvider).controller;
     if (controller == null || !controller.value.isInitialized) {
       return Center(
@@ -206,28 +210,5 @@ class _CameraPageState extends ConsumerState with WidgetsBindingObserver {
     } catch (e) {
       log(e.toString());
     }
-  }
-}
-
-class CameraButton extends StatelessWidget {
-  final VoidCallback callback;
-  final Widget child;
-  final ButtonStyle buttonStyle;
-  const CameraButton({
-    Key? key,
-    required this.callback,
-    required this.child,
-    required this.buttonStyle,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return ButtonTheme(
-      child: ElevatedButton(
-        onPressed: callback,
-        style: buttonStyle,
-        child: child,
-      ),
-    );
   }
 }
