@@ -1,8 +1,8 @@
 import 'dart:io';
 
+import 'package:camera/camera.dart';
 import 'package:camera_riverpod_flutter/camera_feature_controller.dart';
 import 'package:flutter/material.dart';
-import 'package:camera/camera.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() async {
@@ -49,6 +49,10 @@ class _CameraPageState extends ConsumerState with WidgetsBindingObserver {
 
     WidgetsBinding.instance.addObserver(this);
   }
+
+  bool showFocusCircle = false;
+  double x = 0;
+  double y = 0;
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -173,9 +177,71 @@ class _CameraPageState extends ConsumerState with WidgetsBindingObserver {
         borderRadius: const BorderRadius.only(
             bottomRight: Radius.circular(25.0),
             bottomLeft: Radius.circular(25.0)),
-        child: CameraPreview(
-            ref.watch(applicationCameraControllerProvider).controller!),
+        // child: CameraPreview(
+        //     ref.watch(applicationCameraControllerProvider).controller!),
+        child: GestureDetector(
+            onTapUp: (details) {
+              _onTap(details);
+            },
+            child: Stack(
+              children: [
+                Center(
+                    child: CameraPreview(ref
+                        .watch(applicationCameraControllerProvider)
+                        .controller!)),
+                if (showFocusCircle)
+                  Positioned(
+                      top: y - 20,
+                      left: x - 20,
+                      child: Container(
+                        height: 40,
+                        width: 40,
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border:
+                                Border.all(color: Colors.white, width: 1.5)),
+                      ))
+              ],
+            )),
       );
+    }
+  }
+
+  Future<void> _onTap(TapUpDetails details) async {
+    if (ref
+        .watch(applicationCameraControllerProvider)
+        .controller!
+        .value
+        .isInitialized) {
+      showFocusCircle = true;
+      x = details.localPosition.dx;
+      y = details.localPosition.dy;
+
+      double fullWidth = MediaQuery.of(context).size.width;
+      double cameraHeight = fullWidth *
+          ref
+              .watch(applicationCameraControllerProvider)
+              .controller!
+              .value
+              .aspectRatio;
+
+      double xp = x / fullWidth;
+      double yp = y / cameraHeight;
+
+      Offset point = Offset(xp, yp);
+      print("point : $point");
+
+      await ref
+          .watch(applicationCameraControllerProvider)
+          .controller!
+          .setFocusPoint(point);
+      setState(() {
+        Future.delayed(const Duration(seconds: 2)).whenComplete(() {
+          setState(() {
+            showFocusCircle = false;
+          });
+        });
+      });
     }
   }
 }
