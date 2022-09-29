@@ -1,7 +1,4 @@
-import 'dart:convert';
-import 'dart:developer';
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:camera_riverpod_flutter/camera_feature_controller.dart';
 import 'package:flutter/material.dart';
@@ -44,25 +41,21 @@ class CameraPage extends ConsumerStatefulWidget {
 class _CameraPageState extends ConsumerState with WidgetsBindingObserver {
   @override
   void didChangeDependencies() async {
-    WidgetsBinding.instance.addObserver(this);
-
-    for (final CameraDescription cameraDescription in cameras) {
-      if (cameraDescription.lensDirection == CameraLensDirection.back) {
-        ref
-            .watch(applicationCameraControllerProvider.notifier)
-            .onNewCameraSelected(cameraDescription);
-      }
-    }
-
     super.didChangeDependencies();
+
+    ref.watch(applicationCameraControllerProvider.notifier).onNewCameraSelected(
+        cameras.firstWhere(
+            (element) => element.lensDirection == CameraLensDirection.back));
+
+    WidgetsBinding.instance.addObserver(this);
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    final CameraController cameraController =
-        ref.watch(applicationCameraControllerProvider).controller!;
+    final CameraController? cameraController =
+        ref.watch(applicationCameraControllerProvider).controller;
 
-    if (!cameraController.value.isInitialized) {
+    if (cameraController == null || !cameraController.value.isInitialized) {
       return;
     }
 
@@ -71,10 +64,7 @@ class _CameraPageState extends ConsumerState with WidgetsBindingObserver {
     } else if (state == AppLifecycleState.resumed) {
       ref
           .watch(applicationCameraControllerProvider.notifier)
-          .onNewCameraSelected(ref
-              .watch(applicationCameraControllerProvider)
-              .controller!
-              .description);
+          .onNewCameraSelected(cameraController.description);
     }
   }
 
@@ -115,7 +105,9 @@ class _CameraPageState extends ConsumerState with WidgetsBindingObserver {
                 ),
               ),
               CameraButton(
-                callback: _takePicture,
+                callback: () {
+                  //TODO: take picture here
+                },
                 buttonStyle: ButtonStyle(
                   shape: MaterialStateProperty.all<CircleBorder>(
                     const CircleBorder(side: BorderSide.none),
@@ -156,7 +148,8 @@ class _CameraPageState extends ConsumerState with WidgetsBindingObserver {
   }
 
   Widget _cameraPreviewWidget() {
-    var controller = ref.watch(applicationCameraControllerProvider).controller;
+    final CameraController? controller =
+        ref.watch(applicationCameraControllerProvider).controller;
     if (controller == null || !controller.value.isInitialized) {
       return Center(
         child: Column(
@@ -180,31 +173,9 @@ class _CameraPageState extends ConsumerState with WidgetsBindingObserver {
         borderRadius: const BorderRadius.only(
             bottomRight: Radius.circular(25.0),
             bottomLeft: Radius.circular(25.0)),
-        child: CameraPreview(controller),
+        child: CameraPreview(
+            ref.watch(applicationCameraControllerProvider).controller!),
       );
-    }
-  }
-
-  ///Takes picture and returns the Base64 value.
-  ///
-  ///This method provides the functionality
-  ///of taking a picture using the controller
-  ///of [CameraController] provider, converts
-  ///the picture to Uint8List and then encodes
-  ///the list to a Base64, which is then returned
-  ///to the caller.
-  Future<void> _takePicture() async {
-    try {
-      XFile pictureTaken = await ref
-          .watch(applicationCameraControllerProvider)
-          .controller!
-          .takePicture();
-
-      ref
-          .watch(applicationCameraControllerProvider.notifier)
-          .updateLastPictureTaken(pictureTaken);
-    } catch (e) {
-      log(e.toString());
     }
   }
 }
