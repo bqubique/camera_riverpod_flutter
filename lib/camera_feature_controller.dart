@@ -35,7 +35,6 @@ class CameraFeatureController extends StateNotifier<CameraState> {
       await oldController.dispose();
     }
 
-    //[CameraController] with the given camera
     final CameraController cameraController = CameraController(
       cameraDescription,
       ResolutionPreset.max,
@@ -43,9 +42,9 @@ class CameraFeatureController extends StateNotifier<CameraState> {
       imageFormatGroup: ImageFormatGroup.jpeg,
     );
 
-    //Update the state's controller
     state = state.copyWith(controller: cameraController);
 
+    // If the controller is updated then update the UI.
     cameraController.addListener(() {
       if (mounted) {
         state = state.copyWith(controller: state.controller);
@@ -56,14 +55,12 @@ class CameraFeatureController extends StateNotifier<CameraState> {
     });
 
     try {
-      await state.controller?.initialize();
+      await state.controller!.initialize();
     } on CameraException catch (e) {
-      log('Error: ${e.code}');
+      log('error is $e');
     }
 
-    //If dispose is not called yet, then update the state.
     if (mounted) {
-      //This is the equivalent to setState((){})
       state = state.copyWith(controller: state.controller);
     }
   }
