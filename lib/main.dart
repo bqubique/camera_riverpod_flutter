@@ -79,77 +79,84 @@ class _CameraPageState extends ConsumerState with WidgetsBindingObserver {
     var stateController = ref.watch(applicationCameraControllerProvider);
 
     return Scaffold(
-      body: Column(
+      body: Stack(
         children: [
           _cameraPreviewWidget(),
-          const Spacer(),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              CameraButton(
-                callback: ref
-                    .watch(applicationCameraControllerProvider.notifier)
-                    .switchCamera,
-                buttonStyle: OutlinedButton.styleFrom(
-                  shape: const CircleBorder(
-                      side: BorderSide(width: 2.0, color: Colors.white)),
-                  backgroundColor: Colors.grey[800],
-                ),
-                child: Row(
-                  children: const [
-                    Padding(
-                      padding: EdgeInsets.all(15.0),
-                      child: Icon(Icons.flip_camera_android_outlined),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 30.0),
+            child: Align(
+              alignment: Alignment.bottomCenter,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  CameraButton(
+                    callback: ref
+                        .watch(applicationCameraControllerProvider.notifier)
+                        .switchCamera,
+                    buttonStyle: OutlinedButton.styleFrom(
+                      shape: const CircleBorder(
+                          side: BorderSide(width: 2.0, color: Colors.white)),
+                      backgroundColor: Colors.grey[800],
                     ),
-                  ],
-                ),
-              ),
-              CameraButton(
-                callback: () {
-                  //TODO: take picture here
-                },
-                buttonStyle: ButtonStyle(
-                  shape: MaterialStateProperty.all<CircleBorder>(
-                    const CircleBorder(side: BorderSide.none),
+                    child: Row(
+                      children: const [
+                        Padding(
+                          padding: EdgeInsets.all(15.0),
+                          child: Icon(Icons.flip_camera_android_outlined),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                child: Row(
-                  children: const [
-                    Padding(
-                      padding: EdgeInsets.all(20.0),
-                      child: Icon(Icons.camera_alt_outlined),
-                    ),
-                  ],
-                ),
-              ),
-              CameraButton(
-                callback: () {},
-                buttonStyle: OutlinedButton.styleFrom(
-                  shape: const CircleBorder(
-                      side: BorderSide(width: 2.0, color: Colors.white)),
-                  backgroundColor: Colors.grey[800],
-                ),
-                child: stateController.lastPictureTaken!.path.isEmpty
-                    ? const Padding(
-                        padding: EdgeInsets.all(15.0),
-                        child: Icon(Icons.camera_alt_outlined),
-                      )
-                    : Image.file(
-                        File(stateController.lastPictureTaken!.path),
-                        height: 30,
+                  CameraButton(
+                    callback: () {
+                      //TODO: take picture here
+                    },
+                    buttonStyle: ButtonStyle(
+                      shape: MaterialStateProperty.all<CircleBorder>(
+                        const CircleBorder(side: BorderSide.none),
                       ),
-              )
-            ],
-          ),
-          const Spacer(flex: 2),
+                    ),
+                    child: Row(
+                      children: const [
+                        Padding(
+                          padding: EdgeInsets.all(20.0),
+                          child: Icon(Icons.camera_alt_outlined),
+                        ),
+                      ],
+                    ),
+                  ),
+                  CameraButton(
+                    callback: () {},
+                    buttonStyle: OutlinedButton.styleFrom(
+                      shape: const CircleBorder(
+                          side: BorderSide(width: 2.0, color: Colors.white)),
+                      backgroundColor: Colors.grey[800],
+                    ),
+                    child: stateController.lastPictureTaken!.path.isEmpty
+                        ? const Padding(
+                            padding: EdgeInsets.all(15.0),
+                            child: Icon(Icons.camera_alt_outlined),
+                          )
+                        : Image.file(
+                            File(stateController.lastPictureTaken!.path),
+                            height: 30,
+                          ),
+                  )
+                ],
+              ),
+            ),
+          )
         ],
       ),
     );
   }
 
   Widget _cameraPreviewWidget() {
+    final size = MediaQuery.of(context).size;
+
     final CameraController? controller =
         ref.watch(applicationCameraControllerProvider).controller;
+
     if (controller == null || !controller.value.isInitialized) {
       return Center(
         child: Column(
@@ -169,12 +176,18 @@ class _CameraPageState extends ConsumerState with WidgetsBindingObserver {
         ),
       );
     } else {
+      var scale = size.aspectRatio * controller.value.aspectRatio;
+      if (scale < 1) scale = 1 / scale;
       return ClipRRect(
-        borderRadius: const BorderRadius.only(
-            bottomRight: Radius.circular(25.0),
-            bottomLeft: Radius.circular(25.0)),
-        child: CameraPreview(
-            ref.watch(applicationCameraControllerProvider).controller!),
+        borderRadius: const BorderRadius.all(Radius.circular(20.0)),
+        child: Transform.scale(
+          scale: scale,
+          child: Center(
+            child: CameraPreview(
+              ref.watch(applicationCameraControllerProvider).controller!,
+            ),
+          ),
+        ),
       );
     }
   }
