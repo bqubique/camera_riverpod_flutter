@@ -170,9 +170,10 @@ class _CameraPageState extends ConsumerState with WidgetsBindingObserver {
             Text(
               'Initialising Camera Controller',
               style: TextStyle(
-                  color: Colors.black,
-                  fontSize: 20.0,
-                  fontWeight: FontWeight.bold),
+                color: Colors.black,
+                fontSize: 20.0,
+                fontWeight: FontWeight.bold,
+              ),
             ),
             SizedBox(height: 50.0),
             CircularProgressIndicator()
@@ -186,10 +187,30 @@ class _CameraPageState extends ConsumerState with WidgetsBindingObserver {
         borderRadius: const BorderRadius.all(Radius.circular(20.0)),
         child: Transform.scale(
           scale: scale,
-          child: Center(
-            child: CameraPreview(
-              ref.watch(applicationCameraControllerProvider).controller!,
-            ),
+          child: Stack(
+            children: [
+              Center(
+                child: GestureDetector(
+                  onTapUp: (details) => _onTap(details),
+                  child: CameraPreview(
+                    ref.watch(applicationCameraControllerProvider).controller!,
+                  ),
+                ),
+              ),
+              if (showFocusCircle)
+                Positioned(
+                  top: y,
+                  left: x,
+                  child: Container(
+                    height: 40,
+                    width: 40,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 1.5),
+                    ),
+                  ),
+                )
+            ],
           ),
         ),
       );
@@ -218,7 +239,6 @@ class _CameraPageState extends ConsumerState with WidgetsBindingObserver {
       double yp = y / cameraHeight;
 
       Offset point = Offset(xp, yp);
-      print("point : $point");
 
       await ref
           .watch(applicationCameraControllerProvider)
